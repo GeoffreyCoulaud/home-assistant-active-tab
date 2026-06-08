@@ -149,8 +149,9 @@ async function syncAlarm() {
   });
 }
 
-// Initialize focus state + alarm on startup / install / cold SW start.
-async function init() {
+// Ensure focus state + heartbeat alarm exist. Safe to run on every cold
+// service-worker start; does NOT send (the event that woke the worker does).
+async function ensureInitialized() {
   try {
     const win = await api.windows.getLastFocused();
     const runtime = await getRuntime();
@@ -161,9 +162,16 @@ async function init() {
     // no window yet — leave defaults
   }
   await syncAlarm();
+}
+
+// On a genuine lifecycle event, initialize and send an initial state snapshot.
+async function init() {
+  await ensureInitialized();
   await report({ force: true });
 }
 
 api.runtime.onStartup.addListener(init);
 api.runtime.onInstalled.addListener(init);
-init();
+// Cold service-worker restarts only ensure state + alarm; the waking event
+// performs the actual send, avoiding a redundant report per wake.
+ensureInitialized();
