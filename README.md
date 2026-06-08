@@ -30,11 +30,26 @@ may call your Home Assistant host.
 
 (A harmless `Unrecognized manifest key 'background.scripts'` warning is expected.)
 
+## Install — Firefox (temporary)
+
+For quick testing or development: `about:debugging` → *This Firefox* →
+*Load Temporary Add-on* → pick `extension/manifest.json`. This is forgotten when
+the browser restarts; for a lasting install see the next section.
+
+> **Flatpak (Linux):** If your browser is installed via Flatpak, temporary
+> loading may silently fail to load resources (no toolbar icon, empty popup)
+> because the sandboxed browser can't read this repository's directory. Grant
+> the app filesystem access to the `extension/` folder — via [Flatseal](https://flathub.org/apps/com.github.tchx84.Flatseal),
+> or with a `flatpak override`, e.g.:
+> ```bash
+> flatpak override --user --filesystem="$PWD/extension" org.mozilla.firefox
+> ```
+> Replace the application ID with your browser's (e.g.
+> `io.gitlab.librewolf-community` for LibreWolf), then reload the add-on.
+
 ## Install — Firefox (permanent)
 
-Temporary loading (`about:debugging` → *Load Temporary Add-on* → pick
-`extension/manifest.json`) works but is forgotten on restart. For a permanent
-install the add-on must be signed:
+For a lasting install the add-on must be signed:
 
 1. Get API credentials from <https://addons.mozilla.org/developers/addon/api/key/>.
 2. From the `extension/` folder, sign for self-distribution (no source build —
