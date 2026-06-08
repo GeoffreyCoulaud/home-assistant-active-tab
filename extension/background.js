@@ -75,6 +75,10 @@ async function report({ force = false } = {}) {
   const headers = parseHeaders(settings.headersText);
   const result = await sendReport(endpoint, headers, payload);
 
+  // Record the key even when the send failed: this deliberately avoids
+  // re-sending the same state on every tab/focus event while the endpoint is
+  // down (which would spam a broken HA with errors). The forced heartbeat
+  // (report({ force: true })) bypasses this check and recovers automatically.
   runtime.lastKey = key;
   await setRuntime(runtime);
 
