@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write # needed to create GitHub Releases on tags
+
+jobs:
+  checks:
+    name: Type-check, lint, test, format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run format:check
+
+  release:
+    name: Release and publish
+    needs: checks
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.ref_name }}
+      # Firefox / AMO (web-ext reads these env vars automatically)
+      WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+      WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+      # Chrome Web Store
+      CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+      CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+      CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+      CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Verify tag matches manifest version
+        run: |
+          manifest_version="$(node -p "require('./extension/manifest.json').version")"
+          tag_version="${TAG#v}"
+          echo "manifest=$manifest_version tag=$tag_version"
+          if [ "$manifest_version" != "$tag_version" ]; then
+            echo "::error::Tag $TAG does not match manifest version $manifest_version. Bump extension/manifest.json before tagging."
+            exit 1
+          fi
+
+      - name: Package extension zip
+        run: |
+          ( cd extension && zip -r -FS "../extension-${TAG}.zip" . -x '*.DS_Store' )
+          ls -l "extension-${TAG}.zip"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$TAG" "extension-${TAG}.zip" --title "$TAG" --generate-notes
+
+      - name: Publish to Firefox Add-ons (AMO, listed)
+        if: ${{ env.WEB_EXT_API_KEY != '' }}
+        run: >
+          npx --yes web-ext sign
+          --source-dir=extension
+          --channel=listed
+          --api-key="$WEB_EXT_API_KEY"
+          --api-secret="$WEB_EXT_API_SECRET"
+
+      - name: Firefox publish skipped
+        if: ${{ env.WEB_EXT_API_KEY == '' }}
+        run: echo "::notice::Skipped Firefox publish — set AMO_JWT_ISSUER and AMO_JWT_SECRET secrets to enable."
+
+      - name: Publish to Chrome Web Store
+        if: ${{ env.CHROME_EXTENSION_ID != '' }}
+        run: >
+          npx --yes chrome-webstore-upload-cli@3 upload
+          --source "extension-${TAG}.zip"
+          --extension-id "$CHROME_EXTENSION_ID"
+          --client-id "$CHROME_CLIENT_ID"
+          --client-secret "$CHROME_CLIENT_SECRET"
+          --refresh-token "$CHROME_REFRESH_TOKEN"
+          --auto-publish
+
+      - name: Chrome publish skipped
+        if: ${{ env.CHROME_EXTENSION_ID == '' }}
+        run: echo "::notice::Skipped Chrome publish — set CHROME_EXTENSION_ID, CHROME_CLIENT_ID, CHROME_CLIENT_SECRET, CHROME_REFRESH_TOKEN secrets (needs a paid Google developer account) to enable."
