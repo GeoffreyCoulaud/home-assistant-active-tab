@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#
+# pre-push: refuse to push a version tag (vX.Y.Z) whose version does not match
+# extension/manifest.json. Prevents the classic "tagged a release but forgot to
+# bump the manifest" mistake — the stores reject duplicate/again-uploaded
+# versions, and CI would fail late. This catches it before the push leaves.
+#
+# Enable once per clone:  git config core.hooksPath .githooks
+
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+manifest="$root/extension/manifest.json"
+
+read_manifest_version() {
+  if command -v node >/dev/null 2>&1; then
+    node -p "require('$manifest').version"
+  else
+    grep -oE '"version"[[:space:]]*:[[:space:]]*"[^"]+"' "$manifest" |
+      head -1 | sed -E 's/.*"([^"]+)"$/\1/'
+  fi
+}
+
+manifest_version="$(read_manifest_version)"
+zero="0000000000000000000000000000000000000000"
+status=0
+
+# git feeds pre-push one line per ref: <local ref> <local sha> <remote ref> <remote sha>
+while read -r _local_ref local_sha remote_ref _remote_sha; do
+  case "$remote_ref" in
+    refs/tags/v*) ;;
+    *) continue ;; # only version tags matter
+  esac
+  [ "$local_sha" = "$zero" ] && continue # skip tag deletions
+
+  tag="${remote_ref#refs/tags/}"
+  tag_version="${tag#v}"
+  if [ "$tag_version" != "$manifest_version" ]; then
+    echo "✖ pre-push: tag '$tag' (version $tag_version) does not match extension/manifest.json ($manifest_version)." >&2
+    echo "  Bump the manifest to $tag_version, or tag v$manifest_version instead." >&2
+    status=1
+  fi
+done
+
+exit $status
