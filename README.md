@@ -76,8 +76,16 @@ Gecko extension id: `{61d778e5-1738-490d-81d4-441d10ab4592}` (minimum Firefox 12
 
 ## Development
 
+- After cloning, enable the project's git hooks once. A `pre-push` hook refuses
+  to push a version tag whose version doesn't match `extension/manifest.json`,
+  which keeps releases from going out half-bumped:
+  ```bash
+  git config core.hooksPath .githooks
+  ```
 - No build step. All code is baseline JS/CSS/HTML, no polyfills.
-- Run unit tests (pure logic): `npm test` (or `node --test`).
+- Install dev tooling once: `npm install`.
+- Checks (the same set CI runs): `npm run typecheck`, `npm run lint`,
+  `npm test`, and `npm run format` (or `npm run format:check`).
 - Manual webhook receiver for local testing: `node tools/webhook-receiver.js`.
 
 > **CORS note:** against a real HTTPS Home Assistant the granted host permission

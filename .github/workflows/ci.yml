@@ -61,7 +61,7 @@ jobs:
 
       - name: Package extension zip
         run: |
-          ( cd extension && zip -r -FS "../extension-${TAG}.zip" . -x '*.DS_Store' )
+          ( cd extension && zip -r -FS "../extension-${TAG}.zip" . )
           ls -l "extension-${TAG}.zip"
 
       - name: Create GitHub Release
