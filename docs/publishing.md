@@ -33,8 +33,11 @@ Secrets to add (repo → Settings → Secrets and variables → Actions):
   <https://addons.mozilla.org/developers/addon/api/key/>.
 - `AMO_JWT_SECRET` — API secret from the same page.
 
-Note: the **first** listed version of a brand-new add-on may need to be created
-once through the AMO Developer Hub; subsequent versions publish from CI.
+Listing metadata required by AMO (summary, categories, and the per-version
+license) is supplied by `amo-metadata.json` at the repo root, passed via
+`web-ext sign --amo-metadata`. AMO requires a `license` on every listed version;
+the summary and categories are used when the listing is first created. Edit that
+file to refine the public listing (or adjust it later in the AMO Developer Hub).
 
 > Listed and unlisted are mutually exclusive for a given version number — AMO
 > won't take the same version on both channels. This pipeline uses listed (the

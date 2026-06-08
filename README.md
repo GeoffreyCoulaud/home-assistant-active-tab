@@ -93,3 +93,7 @@ Gecko extension id: `{61d778e5-1738-490d-81d4-441d10ab4592}` (minimum Firefox 12
 > requests to `http://localhost` from the extension's secure context through
 > CORS, so the local receiver answers the `OPTIONS` preflight to stay usable.
 > This only affects the `http://localhost` dev setup, not real HTTPS hosts.
+
+## License
+
+[GPL-3.0-only](LICENSE).

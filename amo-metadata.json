@@ -1,0 +1,9 @@
+{
+  "summary": {
+    "en-US": "Reports the active browser tab to Home Assistant via webhook."
+  },
+  "categories": ["other"],
+  "version": {
+    "license": "GPL-3.0-only"
+  }
+}
