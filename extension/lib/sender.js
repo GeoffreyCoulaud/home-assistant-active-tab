@@ -4,7 +4,7 @@ export function buildRequest(endpointUrl, headers, payload) {
     url: endpointUrl,
     options: {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...headers },
+      headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     },
   };

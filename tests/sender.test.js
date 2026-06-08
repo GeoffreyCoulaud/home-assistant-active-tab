@@ -20,7 +20,11 @@ test("buildRequest produces a POST with JSON content-type and merged headers", (
   });
 });
 
-test("user headers cannot override the JSON content-type by default order", () => {
-  const { options } = buildRequest("https://ha.test/", {}, { a: 1 });
+test("the app-set JSON content-type wins over a user-supplied Content-Type", () => {
+  const { options } = buildRequest(
+    "https://ha.test/",
+    { "Content-Type": "text/plain" },
+    { a: 1 },
+  );
   assert.equal(options.headers["Content-Type"], "application/json");
 });
