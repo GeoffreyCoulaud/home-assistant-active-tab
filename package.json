@@ -1,0 +1,10 @@
+{
+  "name": "active-tab-home-assistant",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Reports the active browser tab to Home Assistant via webhook.",
+  "scripts": {
+    "test": "node --test"
+  }
+}
