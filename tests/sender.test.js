@@ -6,7 +6,12 @@ test("buildRequest produces a POST with JSON content-type and merged headers", (
   const { url, options } = buildRequest(
     "https://ha.test/api/webhook/wh",
     { "X-Token": "secret" },
-    { domain: "example.com", url: "https://example.com/", visible: true, focused: true },
+    {
+      domain: "example.com",
+      url: "https://example.com/",
+      visible: true,
+      focused: true,
+    },
   );
   assert.equal(url, "https://ha.test/api/webhook/wh");
   assert.equal(options.method, "POST");

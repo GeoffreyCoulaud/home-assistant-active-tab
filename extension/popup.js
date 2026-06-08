@@ -17,8 +17,12 @@ import {
 // --- tab switching ---
 document.querySelectorAll(".tab").forEach((btn) => {
   btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach((b) => b.classList.remove("active"));
-    document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
+    document
+      .querySelectorAll(".tab")
+      .forEach((b) => b.classList.remove("active"));
+    document
+      .querySelectorAll(".panel")
+      .forEach((p) => p.classList.remove("active"));
     btn.classList.add("active");
     document.getElementById(btn.dataset.panel).classList.add("active");
   });
@@ -55,7 +59,9 @@ async function renderLogs() {
 async function renderStatus() {
   const settings = await getSettings();
   const configured = isConfigured(settings);
-  document.getElementById("st-configured").textContent = configured ? "Yes" : "No";
+  document.getElementById("st-configured").textContent = configured
+    ? "Yes"
+    : "No";
 
   let permText = "n/a";
   if (configured) {
@@ -89,59 +95,63 @@ async function loadSettingsForm() {
   document.getElementById("heartbeatSeconds").value = s.heartbeatSeconds;
 }
 
-document.getElementById("settings-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const msg = document.getElementById("save-msg");
-  msg.style.color = "";
-  const settings = normalizeSettings({
-    host: document.getElementById("host").value,
-    webhookId: document.getElementById("webhookId").value,
-    headersText: document.getElementById("headersText").value,
-    heartbeatSeconds: document.getElementById("heartbeatSeconds").value,
-  });
-  // reflect the clamped heartbeat back to the field
-  document.getElementById("heartbeatSeconds").value = settings.heartbeatSeconds;
+document
+  .getElementById("settings-form")
+  .addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById("save-msg");
+    msg.style.color = "";
+    const settings = normalizeSettings({
+      host: document.getElementById("host").value,
+      webhookId: document.getElementById("webhookId").value,
+      headersText: document.getElementById("headersText").value,
+      heartbeatSeconds: document.getElementById("heartbeatSeconds").value,
+    });
+    // reflect the clamped heartbeat back to the field
+    document.getElementById("heartbeatSeconds").value =
+      settings.heartbeatSeconds;
 
-  if (!isConfigured(settings)) {
-    msg.style.color = "#e53935";
-    msg.textContent = "Host and Webhook ID are required.";
-    return;
-  }
+    if (!isConfigured(settings)) {
+      msg.style.color = "#e53935";
+      msg.textContent = "Host and Webhook ID are required.";
+      return;
+    }
 
-  // Persist settings BEFORE awaiting the permission prompt. In Firefox the
-  // permission prompt tears down the popup, so any code after the await may
-  // never run. We kick off saveSettings() without awaiting it first (so the
-  // storage write is dispatched immediately) and keep permissions.request()
-  // as the first await, which preserves the user gesture it requires.
-  const pattern = originPattern(hostToOrigin(settings.host));
-  const savePromise = saveSettings(settings);
-  let granted = false;
-  try {
-    granted = await api.permissions.request({ origins: [pattern] });
-  } catch (err) {
+    // Persist settings BEFORE awaiting the permission prompt. In Firefox the
+    // permission prompt tears down the popup, so any code after the await may
+    // never run. We kick off saveSettings() without awaiting it first (so the
+    // storage write is dispatched immediately) and keep permissions.request()
+    // as the first await, which preserves the user gesture it requires.
+    const pattern = originPattern(hostToOrigin(settings.host));
+    const savePromise = saveSettings(settings);
+    let granted = false;
+    try {
+      granted = await api.permissions.request({ origins: [pattern] });
+    } catch (err) {
+      await savePromise;
+      msg.style.color = "#e53935";
+      msg.textContent = `Permission request failed: ${err}`;
+      return;
+    }
+
     await savePromise;
-    msg.style.color = "#e53935";
-    msg.textContent = `Permission request failed: ${err}`;
-    return;
-  }
-
-  await savePromise;
-  if (granted) {
-    msg.style.color = "#2e7d32";
-    msg.textContent = "Saved. Access granted.";
-  } else {
-    msg.style.color = "#e53935";
-    msg.textContent =
-      "Saved, but host access was not granted — sending will fail until you grant it.";
-  }
-  await renderStatus();
-});
+    if (granted) {
+      msg.style.color = "#2e7d32";
+      msg.textContent = "Saved. Access granted.";
+    } else {
+      msg.style.color = "#e53935";
+      msg.textContent =
+        "Saved, but host access was not granted — sending will fail until you grant it.";
+    }
+    await renderStatus();
+  });
 
 // live-update while the popup is open
 api.storage.onChanged.addListener((changes, area) => {
   if (area !== "local") return;
   if (changes[STORAGE_KEYS.logs]) renderLogs();
-  if (changes[STORAGE_KEYS.status] || changes[STORAGE_KEYS.settings]) renderStatus();
+  if (changes[STORAGE_KEYS.status] || changes[STORAGE_KEYS.settings])
+    renderStatus();
 });
 
 // initial render

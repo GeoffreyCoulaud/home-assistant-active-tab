@@ -17,7 +17,12 @@ const CORS_HEADERS = {
 
 const server = createServer((req, res) => {
   if (req.method === "OPTIONS") {
-    console.log(new Date().toISOString(), "OPTIONS preflight", req.url, "-> 204");
+    console.log(
+      new Date().toISOString(),
+      "OPTIONS preflight",
+      req.url,
+      "-> 204",
+    );
     res.writeHead(204, CORS_HEADERS);
     res.end();
     return;

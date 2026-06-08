@@ -3,12 +3,15 @@ import assert from "node:assert/strict";
 import { makeEntry, appendEntry } from "../extension/lib/logs.js";
 
 test("makeEntry builds a timestamped entry and merges extra fields", () => {
-  assert.deepEqual(makeEntry("info", "sent example.com", { status: 200 }, 1000), {
-    t: 1000,
-    level: "info",
-    message: "sent example.com",
-    status: 200,
-  });
+  assert.deepEqual(
+    makeEntry("info", "sent example.com", { status: 200 }, 1000),
+    {
+      t: 1000,
+      level: "info",
+      message: "sent example.com",
+      status: 200,
+    },
+  );
 });
 
 test("makeEntry works without extra", () => {
@@ -38,6 +41,10 @@ test("appendEntry keeps only the most recent `max` entries", () => {
 });
 
 test("appendEntry tolerates non-array input", () => {
-  const next = appendEntry(undefined, { t: 1, level: "info", message: "x" }, 10);
+  const next = appendEntry(
+    undefined,
+    { t: 1, level: "info", message: "x" },
+    10,
+  );
   assert.deepEqual(next, [{ t: 1, level: "info", message: "x" }]);
 });

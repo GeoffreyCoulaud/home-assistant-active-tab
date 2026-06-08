@@ -85,7 +85,10 @@ async function report({ force = false } = {}) {
   if (result.ok) {
     await log("info", `Sent ${payload.domain}`, { status: result.status });
   } else if (result.error) {
-    await log("error", `Network error sending ${payload.domain}: ${result.error}`);
+    await log(
+      "error",
+      `Network error sending ${payload.domain}: ${result.error}`,
+    );
   } else {
     await log("error", `HTTP ${result.status} sending ${payload.domain}`, {
       status: result.status,

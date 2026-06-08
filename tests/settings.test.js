@@ -15,10 +15,22 @@ test("normalizeSettings fills defaults from empty input", () => {
 });
 
 test("normalizeSettings clamps heartbeat to the 30 s floor and rounds", () => {
-  assert.equal(normalizeSettings({ heartbeatSeconds: 10 }).heartbeatSeconds, 30);
-  assert.equal(normalizeSettings({ heartbeatSeconds: 45.6 }).heartbeatSeconds, 46);
-  assert.equal(normalizeSettings({ heartbeatSeconds: "abc" }).heartbeatSeconds, 60);
-  assert.equal(normalizeSettings({ heartbeatSeconds: 90 }).heartbeatSeconds, 90);
+  assert.equal(
+    normalizeSettings({ heartbeatSeconds: 10 }).heartbeatSeconds,
+    30,
+  );
+  assert.equal(
+    normalizeSettings({ heartbeatSeconds: 45.6 }).heartbeatSeconds,
+    46,
+  );
+  assert.equal(
+    normalizeSettings({ heartbeatSeconds: "abc" }).heartbeatSeconds,
+    60,
+  );
+  assert.equal(
+    normalizeSettings({ heartbeatSeconds: 90 }).heartbeatSeconds,
+    90,
+  );
 });
 
 test("normalizeSettings trims host and webhookId", () => {
@@ -42,7 +54,10 @@ test("hostToOrigin adds https, strips path and trailing slash, keeps scheme/port
 });
 
 test("originPattern appends /* for permission matching", () => {
-  assert.equal(originPattern("https://ha.example.com"), "https://ha.example.com/*");
+  assert.equal(
+    originPattern("https://ha.example.com"),
+    "https://ha.example.com/*",
+  );
   assert.equal(originPattern(""), "");
 });
 

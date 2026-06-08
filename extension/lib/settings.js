@@ -1,4 +1,7 @@
-import { DEFAULT_HEARTBEAT_SECONDS, MIN_HEARTBEAT_SECONDS } from "./constants.js";
+import {
+  DEFAULT_HEARTBEAT_SECONDS,
+  MIN_HEARTBEAT_SECONDS,
+} from "./constants.js";
 
 export const DEFAULT_SETTINGS = {
   host: "",
@@ -30,7 +33,9 @@ export function isConfigured(settings) {
 export function hostToOrigin(host) {
   const trimmed = String(host || "").trim();
   if (trimmed === "") return "";
-  const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  const withScheme = /^https?:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
   try {
     return new URL(withScheme).origin;
   } catch {

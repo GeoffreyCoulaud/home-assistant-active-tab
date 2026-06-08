@@ -1,6 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { isReportableUrl, buildPayload, stateKey } from "../extension/lib/state.js";
+import {
+  isReportableUrl,
+  buildPayload,
+  stateKey,
+} from "../extension/lib/state.js";
 
 test("isReportableUrl accepts http(s) and rejects everything else", () => {
   assert.equal(isReportableUrl("https://example.com/x"), true);
@@ -29,13 +33,21 @@ test("buildPayload returns { domain, url, visible, focused }", () => {
 });
 
 test("buildPayload coerces visible/focused to booleans", () => {
-  const payload = buildPayload({ url: "https://a.test/", focused: 1, visible: 0 });
+  const payload = buildPayload({
+    url: "https://a.test/",
+    focused: 1,
+    visible: 0,
+  });
   assert.equal(payload.focused, true);
   assert.equal(payload.visible, false);
 });
 
 test("stateKey changes when the url changes", () => {
-  const a = stateKey(buildPayload({ url: "https://a.test/1", focused: true, visible: true }));
-  const b = stateKey(buildPayload({ url: "https://a.test/2", focused: true, visible: true }));
+  const a = stateKey(
+    buildPayload({ url: "https://a.test/1", focused: true, visible: true }),
+  );
+  const b = stateKey(
+    buildPayload({ url: "https://a.test/2", focused: true, visible: true }),
+  );
   assert.notEqual(a, b);
 });
