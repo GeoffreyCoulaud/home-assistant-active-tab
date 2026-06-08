@@ -73,16 +73,6 @@ async function report({ force = false } = {}) {
 
   const endpoint = webhookUrl(settings);
   const headers = parseHeaders(settings.headersText);
-
-  // [diag] Firefox CORS investigation: capture the origins the extension
-  // actually holds at fetch time so we can see whether the granted host
-  // permission covers the endpoint. Remove once the issue is resolved.
-  const allPerms = await api.permissions.getAll();
-  await log(
-    "info",
-    `[diag] sending to ${endpoint} (contains=${hasPerm}); granted origins=${JSON.stringify(allPerms.origins || [])}`,
-  );
-
   const result = await sendReport(endpoint, headers, payload);
 
   // Record the key even when the send failed: this deliberately avoids

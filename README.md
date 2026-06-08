@@ -58,4 +58,10 @@ Gecko extension id: `{61d778e5-1738-490d-81d4-441d10ab4592}` (minimum Firefox 12
 - Run unit tests (pure logic): `npm test` (or `node --test`).
 - Manual webhook receiver for local testing: `node tools/webhook-receiver.js`.
 
+> **CORS note:** against a real HTTPS Home Assistant the granted host permission
+> lets the background `fetch` bypass CORS (no preflight). But Firefox routes
+> requests to `http://localhost` from the extension's secure context through
+> CORS, so the local receiver answers the `OPTIONS` preflight to stay usable.
+> This only affects the `http://localhost` dev setup, not real HTTPS hosts.
+
 The original ViolentMonkey userscript is kept at `focus-to-ha.user.js` for reference.
