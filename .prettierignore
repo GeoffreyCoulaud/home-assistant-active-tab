@@ -1,3 +1,7 @@
 node_modules/
 extension/icons/
 *.min.js
+
+# Hand-authored docs — keep prose formatting under human control.
+/README.md
+docs/
