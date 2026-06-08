@@ -56,6 +56,6 @@ Gecko extension id: `{61d778e5-1738-490d-81d4-441d10ab4592}` (minimum Firefox 12
 
 - No build step. All code is baseline JS/CSS/HTML, no polyfills.
 - Run unit tests (pure logic): `npm test` (or `node --test`).
-- Manual webhook receiver for local testing: `node tools/test-receiver.js`.
+- Manual webhook receiver for local testing: `node tools/webhook-receiver.js`.
 
 The original ViolentMonkey userscript is kept at `focus-to-ha.user.js` for reference.

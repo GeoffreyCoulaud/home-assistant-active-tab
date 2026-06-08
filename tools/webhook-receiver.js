@@ -1,5 +1,5 @@
 // Dev-only: a tiny webhook receiver that logs POST bodies.
-// Run: node tools/test-receiver.js   (listens on http://localhost:8123)
+// Run: node tools/webhook-receiver.js   (listens on http://localhost:8123)
 import { createServer } from "node:http";
 
 const server = createServer((req, res) => {
