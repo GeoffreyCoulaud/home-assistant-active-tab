@@ -3,8 +3,14 @@ import {
   STORAGE_KEYS,
   HEARTBEAT_ALARM_NAME,
   MIN_HEARTBEAT_SECONDS,
+  MISSING_PERMISSION,
 } from "./lib/constants.js";
-import { isReportableUrl, buildPayload, stateKey } from "./lib/state.js";
+import {
+  isReportableUrl,
+  buildPayload,
+  stateKey,
+  buildStatus,
+} from "./lib/state.js";
 import {
   getSettings,
   log,
@@ -15,8 +21,7 @@ import {
 import {
   isConfigured,
   webhookUrl,
-  hostToOrigin,
-  originPattern,
+  hostPermissionPattern,
 } from "./lib/settings.js";
 import { parseHeaders } from "./lib/headers.js";
 import { sendReport } from "./lib/sender.js";
@@ -53,21 +58,20 @@ async function report({ force = false } = {}) {
     return;
   }
 
-  const pattern = originPattern(hostToOrigin(settings.host));
+  const pattern = hostPermissionPattern(settings);
   const hasPerm = await api.permissions.contains({ origins: [pattern] });
   if (!hasPerm) {
     await log(
       "error",
       `Missing host permission for ${pattern}. Open the popup and save settings to grant it.`,
     );
-    await setStatus({
-      time: Date.now(),
-      domain: payload.domain,
-      url: payload.url,
-      ok: false,
-      status: 0,
-      error: "missing-permission",
-    });
+    await setStatus(
+      buildStatus(
+        payload,
+        { ok: false, status: 0, error: MISSING_PERMISSION },
+        Date.now(),
+      ),
+    );
     return;
   }
 
@@ -83,25 +87,18 @@ async function report({ force = false } = {}) {
   await setRuntime(runtime);
 
   if (result.ok) {
-    await log("info", `Sent ${payload.domain}`, { status: result.status });
+    await log("info", `Sent ${payload.hostname}`, { status: result.status });
   } else if (result.error) {
     await log(
       "error",
-      `Network error sending ${payload.domain}: ${result.error}`,
+      `Network error sending ${payload.hostname}: ${result.error}`,
     );
   } else {
-    await log("error", `HTTP ${result.status} sending ${payload.domain}`, {
+    await log("error", `HTTP ${result.status} sending ${payload.hostname}`, {
       status: result.status,
     });
   }
-  await setStatus({
-    time: Date.now(),
-    domain: payload.domain,
-    url: payload.url,
-    ok: result.ok,
-    status: result.status,
-    error: result.error,
-  });
+  await setStatus(buildStatus(payload, result, Date.now()));
 }
 
 // --- event wiring (registered synchronously at top level) -----------------

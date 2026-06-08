@@ -4,6 +4,7 @@ import {
   isReportableUrl,
   buildPayload,
   stateKey,
+  buildStatus,
 } from "../extension/lib/state.js";
 
 test("isReportableUrl accepts http(s) and rejects everything else", () => {
@@ -18,14 +19,14 @@ test("isReportableUrl accepts http(s) and rejects everything else", () => {
   assert.equal(isReportableUrl("not a url"), false);
 });
 
-test("buildPayload returns { domain, url, visible, focused }", () => {
+test("buildPayload returns { hostname, url, visible, focused }", () => {
   const payload = buildPayload({
     url: "https://example.com/path?x=1",
     focused: true,
     visible: true,
   });
   assert.deepEqual(payload, {
-    domain: "example.com",
+    hostname: "example.com",
     url: "https://example.com/path?x=1",
     visible: true,
     focused: true,
@@ -50,4 +51,24 @@ test("stateKey changes when the url changes", () => {
     buildPayload({ url: "https://a.test/2", focused: true, visible: true }),
   );
   assert.notEqual(a, b);
+});
+
+test("buildStatus combines payload, result, and timestamp", () => {
+  const payload = {
+    hostname: "example.com",
+    url: "https://example.com/",
+    visible: true,
+    focused: true,
+  };
+  assert.deepEqual(
+    buildStatus(payload, { ok: true, status: 200, error: null }, 1234),
+    {
+      time: 1234,
+      hostname: "example.com",
+      url: "https://example.com/",
+      ok: true,
+      status: 200,
+      error: null,
+    },
+  );
 });

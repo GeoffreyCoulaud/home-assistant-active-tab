@@ -6,6 +6,7 @@ import {
   isConfigured,
   hostToOrigin,
   originPattern,
+  hostPermissionPattern,
   webhookUrl,
 } from "../extension/lib/settings.js";
 
@@ -59,6 +60,18 @@ test("originPattern appends /* for permission matching", () => {
     "https://ha.example.com/*",
   );
   assert.equal(originPattern(""), "");
+});
+
+test("hostPermissionPattern derives the permission pattern from settings", () => {
+  assert.equal(
+    hostPermissionPattern({ host: "ha.example.com" }),
+    "https://ha.example.com/*",
+  );
+  assert.equal(
+    hostPermissionPattern({ host: "http://ha:8123" }),
+    "http://ha:8123/*",
+  );
+  assert.equal(hostPermissionPattern({ host: "" }), "");
 });
 
 test("webhookUrl composes the endpoint", () => {

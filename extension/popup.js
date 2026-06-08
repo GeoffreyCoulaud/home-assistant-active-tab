@@ -1,5 +1,5 @@
 import { api } from "./lib/api.js";
-import { STORAGE_KEYS } from "./lib/constants.js";
+import { STORAGE_KEYS, MISSING_PERMISSION } from "./lib/constants.js";
 import {
   getSettings,
   saveSettings,
@@ -10,9 +10,11 @@ import {
 import {
   normalizeSettings,
   isConfigured,
-  hostToOrigin,
-  originPattern,
+  hostPermissionPattern,
 } from "./lib/settings.js";
+
+const COLOR_ERROR = "#e53935";
+const COLOR_OK = "#2e7d32";
 
 // --- tab switching ---
 document.querySelectorAll(".tab").forEach((btn) => {
@@ -51,7 +53,7 @@ async function renderLogs() {
     const li = document.createElement("li");
     li.className = `log ${entry.level}`;
     const status = entry.status != null ? ` [${entry.status}]` : "";
-    li.textContent = `${fmtTime(entry.t)} ${entry.message}${status}`;
+    li.textContent = `${fmtTime(entry.time)} ${entry.message}${status}`;
     logsEl.appendChild(li);
   }
 }
@@ -65,7 +67,7 @@ async function renderStatus() {
 
   let permText = "n/a";
   if (configured) {
-    const pattern = originPattern(hostToOrigin(settings.host));
+    const pattern = hostPermissionPattern(settings);
     const has = await api.permissions.contains({ origins: [pattern] });
     permText = has ? "Granted" : "Not granted";
   }
@@ -74,9 +76,9 @@ async function renderStatus() {
   const status = await getStatus();
   if (status) {
     document.getElementById("st-last-event").textContent =
-      `${fmtTime(status.time)} — ${status.domain || "—"}`;
+      `${fmtTime(status.time)} — ${status.hostname || "—"}`;
     let res;
-    if (status.error === "missing-permission") res = "Missing permission";
+    if (status.error === MISSING_PERMISSION) res = "Missing permission";
     else if (status.error) res = `Error: ${status.error}`;
     else if (status.ok) res = `OK (${status.status})`;
     else res = `HTTP ${status.status}`;
@@ -88,11 +90,11 @@ async function renderStatus() {
 }
 
 async function loadSettingsForm() {
-  const s = await getSettings();
-  document.getElementById("host").value = s.host;
-  document.getElementById("webhookId").value = s.webhookId;
-  document.getElementById("headersText").value = s.headersText;
-  document.getElementById("heartbeatSeconds").value = s.heartbeatSeconds;
+  const settings = await getSettings();
+  document.getElementById("host").value = settings.host;
+  document.getElementById("webhookId").value = settings.webhookId;
+  document.getElementById("headersText").value = settings.headersText;
+  document.getElementById("heartbeatSeconds").value = settings.heartbeatSeconds;
 }
 
 document
@@ -112,7 +114,7 @@ document
       settings.heartbeatSeconds;
 
     if (!isConfigured(settings)) {
-      msg.style.color = "#e53935";
+      msg.style.color = COLOR_ERROR;
       msg.textContent = "Host and Webhook ID are required.";
       return;
     }
@@ -122,24 +124,24 @@ document
     // never run. We kick off saveSettings() without awaiting it first (so the
     // storage write is dispatched immediately) and keep permissions.request()
     // as the first await, which preserves the user gesture it requires.
-    const pattern = originPattern(hostToOrigin(settings.host));
+    const pattern = hostPermissionPattern(settings);
     const savePromise = saveSettings(settings);
-    let granted = false;
+    let granted;
     try {
       granted = await api.permissions.request({ origins: [pattern] });
     } catch (err) {
       await savePromise;
-      msg.style.color = "#e53935";
+      msg.style.color = COLOR_ERROR;
       msg.textContent = `Permission request failed: ${err}`;
       return;
     }
 
     await savePromise;
     if (granted) {
-      msg.style.color = "#2e7d32";
+      msg.style.color = COLOR_OK;
       msg.textContent = "Saved. Access granted.";
     } else {
-      msg.style.color = "#e53935";
+      msg.style.color = COLOR_ERROR;
       msg.textContent =
         "Saved, but host access was not granted — sending will fail until you grant it.";
     }

@@ -2,6 +2,7 @@
   color-scheme: light dark;
   font-family: system-ui, sans-serif;
   font-size: 14px;
+  --color-error: #e53935;
 }
 
 body {
@@ -88,7 +89,7 @@ body {
 }
 
 .logs .log.error {
-  color: #e53935;
+  color: var(--color-error);
 }
 
 form label {
