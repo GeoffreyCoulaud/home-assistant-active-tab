@@ -108,18 +108,24 @@ document.getElementById("settings-form").addEventListener("submit", async (e) =>
     return;
   }
 
-  // Request host permission — must be the first await (preserves the user gesture).
+  // Persist settings BEFORE awaiting the permission prompt. In Firefox the
+  // permission prompt tears down the popup, so any code after the await may
+  // never run. We kick off saveSettings() without awaiting it first (so the
+  // storage write is dispatched immediately) and keep permissions.request()
+  // as the first await, which preserves the user gesture it requires.
   const pattern = originPattern(hostToOrigin(settings.host));
+  const savePromise = saveSettings(settings);
   let granted = false;
   try {
     granted = await api.permissions.request({ origins: [pattern] });
   } catch (err) {
+    await savePromise;
     msg.style.color = "#e53935";
     msg.textContent = `Permission request failed: ${err}`;
     return;
   }
 
-  await saveSettings(settings);
+  await savePromise;
   if (granted) {
     msg.style.color = "#2e7d32";
     msg.textContent = "Saved. Access granted.";
