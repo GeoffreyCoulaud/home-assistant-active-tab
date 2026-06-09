@@ -1,7 +1,7 @@
 # Active Tab → Home Assistant
 
 <p align="center">
-  <img src="extension-logo.png" alt="Active Tab → Home Assistant logo" width="128" height="128" />
+  <img src="assets/extension-logo.png" alt="Active Tab → Home Assistant logo" width="128" height="128" />
 </p>
 
 Browser extension (Chromium + Firefox, Manifest V3) that reports the active
@@ -19,6 +19,21 @@ last reported state.
 
 > **Note:** This extension was generated almost entirely autonomously by
 > [Claude Code](https://claude.com/claude-code) running Anthropic's Opus 4.8 model.
+
+## Screenshots
+
+<table align="center">
+  <thead>
+    <tr>
+      <th style="text-align: center;">Status view</th>
+      <th style="text-align: center;">Settings view</th>
+    </tr>
+  </thead>
+  <tbody>
+    <td><img src="assets/screenshot-status-view.png" alt="Status view screenshot" width="332"/></td>
+    <td><img src="assets/screenshot-settings-view.png" alt="Settings view screenshot" width="332"/></td>
+  </tbody>
+</table>
 
 ## Configuration (popup → Settings)
 
