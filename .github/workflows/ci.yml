@@ -26,28 +26,23 @@ jobs:
       - run: npm test
       - run: npm run format:check
 
-  release:
-    name: Release and publish
+  package:
+    name: Package and release
     needs: checks
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     env:
       TAG: ${{ github.ref_name }}
-      # Firefox / AMO (web-ext reads these env vars automatically)
-      WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
-      WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
-      # Chrome Web Store
-      CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-      CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-      CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-      CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+    outputs:
+      # Which store publishers have their secrets configured (gates the
+      # publish jobs, since job-level `if` can't read secrets directly).
+      firefox: ${{ steps.detect.outputs.firefox }}
+      chrome: ${{ steps.detect.outputs.chrome }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
 
       - name: Verify tag matches manifest version
         run: |
@@ -61,42 +56,84 @@ jobs:
 
       - name: Package extension zip
         run: |
-          ( cd extension && zip -r -FS "../extension-${TAG}.zip" . )
-          ls -l "extension-${TAG}.zip"
+          ( cd extension && zip -r -FS ../extension.zip . )
+          ls -l extension.zip
 
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$TAG" "extension-${TAG}.zip" --title "$TAG" --generate-notes
+        run: gh release create "$TAG" extension.zip --title "$TAG" --generate-notes
 
-      - name: Publish to Firefox Add-ons (AMO, listed)
-        if: ${{ env.WEB_EXT_API_KEY != '' }}
+      - name: Detect configured publishers
+        id: detect
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+        run: |
+          echo "firefox=$([ -n "$AMO_JWT_ISSUER" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "chrome=$([ -n "$CHROME_EXTENSION_ID" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-package
+          path: |
+            extension.zip
+            amo-metadata.json
+          retention-days: 7
+
+  publish-firefox:
+    name: Publish to Firefox Add-ons (AMO, listed)
+    needs: package
+    if: needs.package.outputs.firefox == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: extension-package
+      - name: Unzip packaged source
+        run: mkdir pkg && unzip -q extension.zip -d pkg
+      - name: Sign and submit (listed)
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
         # Listed versions are signed only after Mozilla's manual review, so
         # don't wait for approval (default is 15 min) — submit and exit.
         run: >
           npx --yes web-ext sign
-          --source-dir=extension
+          --source-dir=pkg
           --channel=listed
           --amo-metadata=amo-metadata.json
           --approval-timeout=0
           --api-key="$WEB_EXT_API_KEY"
           --api-secret="$WEB_EXT_API_SECRET"
 
-      - name: Firefox publish skipped
-        if: ${{ env.WEB_EXT_API_KEY == '' }}
-        run: echo "::notice::Skipped Firefox publish — set AMO_JWT_ISSUER and AMO_JWT_SECRET secrets to enable."
-
-      - name: Publish to Chrome Web Store
-        if: ${{ env.CHROME_EXTENSION_ID != '' }}
+  publish-chrome:
+    name: Publish to Chrome Web Store
+    needs: package
+    if: needs.package.outputs.chrome == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: extension-package
+      - name: Upload and publish
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
         run: >
           npx --yes chrome-webstore-upload-cli@3 upload
-          --source "extension-${TAG}.zip"
+          --source extension.zip
           --extension-id "$CHROME_EXTENSION_ID"
           --client-id "$CHROME_CLIENT_ID"
           --client-secret "$CHROME_CLIENT_SECRET"
           --refresh-token "$CHROME_REFRESH_TOKEN"
           --auto-publish
-
-      - name: Chrome publish skipped
-        if: ${{ env.CHROME_EXTENSION_ID == '' }}
-        run: echo "::notice::Skipped Chrome publish — set CHROME_EXTENSION_ID, CHROME_CLIENT_ID, CHROME_CLIENT_SECRET, CHROME_REFRESH_TOKEN secrets (needs a paid Google developer account) to enable."
