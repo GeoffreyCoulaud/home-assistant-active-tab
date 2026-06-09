@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Active Tab → Home Assistant",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Reports the active browser tab to Home Assistant via webhook.",
   "homepage_url": "https://github.com/GeoffreyCoulaud/home-assistant-active-tab",
   "icons": {
