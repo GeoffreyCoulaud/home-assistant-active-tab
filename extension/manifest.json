@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Active Tab → Home Assistant",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Reports the active browser tab to Home Assistant via webhook.",
   "homepage_url": "https://github.com/GeoffreyCoulaud/home-assistant-active-tab",
   "icons": {
@@ -30,7 +30,7 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "{61d778e5-1738-490d-81d4-441d10ab4592}",
-      "strict_min_version": "128.0",
+      "strict_min_version": "140.0",
       "data_collection_permissions": {
         "required": ["browsingActivity"]
       }
