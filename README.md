@@ -87,7 +87,7 @@ Alternatively, on Firefox Developer Edition / ESR you may set
 `xpinstall.signatures.required = false` in `about:config` and install the
 unsigned `.xpi` directly.
 
-Gecko extension id: `{61d778e5-1738-490d-81d4-441d10ab4592}` (minimum Firefox 128).
+Gecko extension id: `{61d778e5-1738-490d-81d4-441d10ab4592}` (minimum Firefox 140).
 
 ## Development
 
